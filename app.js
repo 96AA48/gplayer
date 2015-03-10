@@ -35,7 +35,7 @@ _.each(args, function (item) {
 
 
 function help() {
-	process.stdout.write("gplayer v1.1.0, by: Bram \"#96AA48\" van der Veen\n\n");
+	process.stdout.write("gplayer v1.1.0, by: Bram \"#96AA48\" 	van der Veen\n\n");
 	process.stdout.write("Usage : gplayer [options] <-s song>\n");
 
 	var options = [
@@ -96,7 +96,7 @@ function lookup(query) {
 								}
 							});
 							res.on("end", function () {
-								play(filename.split("/")[filename.split("/").length - 1])
+								play(filename)
 							});
 						});
 					}
@@ -112,8 +112,13 @@ function lookup(query) {
 function play(file) {
 	var decoder = new lame.Decoder();
 	var speaker = new require('speaker')();;
-	
-	fs.createReadStream(file).pipe(decoder).pipe(speaker);
+	console.log(speaker);
+	var stream = fs.createReadStream(file);
+	stream.pipe(decoder).pipe(speaker);
+	setTimeout(function () { 
+		stream.unpipe(decoder);
+		stream.pause();
+	}, 5000);
 }
 
 function link(query) {return "http://tinysong.com/s/" + query + "?format=json&limit=20&key=0131065fac026c65c87e3658dfa66b88";};
