@@ -53,17 +53,17 @@ function help() {
 
 function offline() {
 	var files = [];
-	 for (i=0; i<fs.readdirSync("/home/" + process.env["USER"] + "/Music").length; i++) {
-	 	files[i] = fs.readdirSync("/home/" + process.env["USER"] + "/Music")[i];
+	 for (i=0; i< fs.readdirSync(getDownloadFolder()).length; i++) {
+	 	files[i] = fs.readdirSync(getDownloadFolder())[i];
 	};
 
 	for (i=0; i<files.length; i++) {
-		process.stdout.write("[".cyan + i + "] ".cyan + (files[i].split(".mp3")[0])._bodyold + "\n");
+		process.stdout.write("[".cyan + i + "] ".cyan + (files[i].split(".mp3")[0]).bold + "\n");
 		if (i==files.length - 1) process.stdout.write("\n");
 	};
 
 	readline.question("What song do you want to play? #", function (input) {
-		if (parseInt(input) != NaN) play(files[input]);
+		if (parseInt(input) != NaN) play(getDownloadFolder() + files[input]);
 	});
 }
 
@@ -75,7 +75,6 @@ function lookup(query) {
 		});
 
 		res.on("end", function () {
-			console.log(_body);
 			_body = JSON.parse(_body);
 
 			for (i = 0; i < _body.length; i++) {
@@ -85,7 +84,7 @@ function lookup(query) {
 
 			readline.question("What song do you want to play? #", function (input) {if (parseInt(input) != NaN) {
 				GS.Grooveshark.getStreamingUrl(_body[input].SongID, function (err, streamUrl) {
-					var filename = getFilename() + _body[input].SongName + " - " + _body[input].ArtistName + ".mp3";
+					var filename = getDownloadFolder() + _body[input].SongName + " - " + _body[input].ArtistName + ".mp3";
 					if (!fs.existsSync(filename)) {
 						http.get(streamUrl, function(res) {
 							res.on("data", function (data){
@@ -113,13 +112,15 @@ function lookup(query) {
 function play(file) {
 	var decoder = new lame.Decoder();
 	var speaker = new require('speaker')();;
-
+	
 	fs.createReadStream(file).pipe(decoder).pipe(speaker);
 }
 
 function link(query) {return "http://tinysong.com/s/" + query + "?format=json&limit=20&key=0131065fac026c65c87e3658dfa66b88";};
 
-function getFilename() {
-	if (process.platform == "win32") return "C:\\Users\\" + process.env.USERNAME + "\\gplayer";
-	else if (process.platform == "linux") return "/home/" + process.env.USER + '/gplayer';
+function getDownloadFolder() {
+	if (process.platform == "win32") var folder = "C:\\Users\\" + process.env.USERNAME + "\\gplayer\\";
+	else if (process.platform == "linux") var folder = "/home/" + process.env.USER + '/gplayer/';
+	if (!fs.existsSync(folder)) fs.mkdirSync(folder);
+	return folder;
 }
