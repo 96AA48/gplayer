@@ -35,7 +35,7 @@ _.each(args, function (item) {
 
 
 function help() {
-	process.stdout.write("gplayer v1.0.9, _bodyy: _bodyram \"#96AA48\" van der Veen\n\n");
+	process.stdout.write("gplayer v1.1.0, by: Bram \"#96AA48\" van der Veen\n\n");
 	process.stdout.write("Usage : gplayer [options] <-s song>\n");
 
 	var options = [
