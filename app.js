@@ -2,11 +2,10 @@
 var color = require("colors");
 var GS = require("grooveshark-streaming");
 var _ = require("underscore");
-
+var lame = require('lame');
 
 var fs = require("fs");
 var http = require("http");
-var mplayer = require("child_process").spawn;
 var readline = require("readline").createInterface({input : process.stdin, output : process.stdout});
 
 var args = [];
@@ -17,9 +16,9 @@ for (i=0; i<process.argv.join(" ").split(" -").length; i++) {
 
 if (args.length == 0) help();
 
-if (!fs.existsSync("/home/" + process.env["USER"] + "/Music")) {
-	fs.mkdirSync("/home/" + process.env["USER"] + "/Music", 0775);
-}
+// if (!fs.existsSync("/home/" + process.env["USER"] + "/Music")) {
+// 	fs.mkdirSync("/home/" + process.env["USER"] + "/Music", 0775);
+// }
 _.each(args, function (item) {
 	if (item == "-help" || item == "h") { 
 		help();
@@ -36,7 +35,7 @@ _.each(args, function (item) {
 
 
 function help() {
-	process.stdout.write("gplayer v1.0.9, by: Bram \"#96AA48\" van der Veen\n\n");
+	process.stdout.write("gplayer v1.0.9, _bodyy: _bodyram \"#96AA48\" van der Veen\n\n");
 	process.stdout.write("Usage : gplayer [options] <-s song>\n");
 
 	var options = [
@@ -59,7 +58,7 @@ function offline() {
 	};
 
 	for (i=0; i<files.length; i++) {
-		process.stdout.write("[".cyan + i + "] ".cyan + (files[i].split(".mp3")[0]).bold + "\n");
+		process.stdout.write("[".cyan + i + "] ".cyan + (files[i].split(".mp3")[0])._bodyold + "\n");
 		if (i==files.length - 1) process.stdout.write("\n");
 	};
 
@@ -70,12 +69,23 @@ function offline() {
 
 function lookup(query) {
 	http.get(link(query), function (res) {
-		var b = ""; res.on("data", function (data) {b+=data});
+		var _body = ""; 
+		res.on("data", function (data) {
+			_body+=data
+		});
+
 		res.on("end", function () {
-			b = JSON.parse(b);for (i = 0; i < b.length; i++) {process.stdout.write("[".cyan + i + "] ".cyan + (b[i].SongName + " - " + b[i].ArtistName).bold + "\n"); if (i==b.length-1) process.stdout.write("\n");}
+			console.log(_body);
+			_body = JSON.parse(_body);
+
+			for (i = 0; i < _body.length; i++) {
+				process.stdout.write("[".cyan + i + "] ".cyan + (_body[i].SongName + " - " + _body[i].ArtistName).bold + "\n"); 
+				if (i==_body.length - 1) process.stdout.write("\n");
+			}
+
 			readline.question("What song do you want to play? #", function (input) {if (parseInt(input) != NaN) {
-				GS.Grooveshark.getStreamingUrl(b[input].SongID, function (err, streamUrl) {
-					var filename = "/home/" + process.env["USER"] + "/Music/" + b[input].SongName + " - " + b[input].ArtistName + ".mp3";
+				GS.Grooveshark.getStreamingUrl(_body[input].SongID, function (err, streamUrl) {
+					var filename = getFilename() + _body[input].SongName + " - " + _body[input].ArtistName + ".mp3";
 					if (!fs.existsSync(filename)) {
 						http.get(streamUrl, function(res) {
 							res.on("data", function (data){
@@ -101,21 +111,15 @@ function lookup(query) {
 }
 
 function play(file) {
-	var player = mplayer("mplayer", ["-ao","alsa", "/home/" + process.env["USER"] + "/Music/" + file]);
-	var isfiltered = false;
+	var decoder = new lame.Decoder();
+	var speaker = new require('speaker')();;
 
-	player.stdout.on("data", function (data) {
-		if (data.toString().substr(0,2) == "A:" && !isfiltered) { 
-			player.stdout.pipe(process.stdout);
-	 		isfiltered = true;
-		}
-	});
-
-	process.stdin.pipe(player.stdin);
-
-	player.on("error", function (data) {process.stdout.write("There was an error playing your song, maybe you need to install mplayer?\n");
-		process.exit(0);
-	});
+	fs.createReadStream(file).pipe(decoder).pipe(speaker);
 }
 
 function link(query) {return "http://tinysong.com/s/" + query + "?format=json&limit=20&key=0131065fac026c65c87e3658dfa66b88";};
+
+function getFilename() {
+	if (process.platform == "win32") return "C:\\Users\\" + process.env.USERNAME + "\\gplayer";
+	else if (process.platform == "linux") return "/home/" + process.env.USER + '/gplayer';
+}
