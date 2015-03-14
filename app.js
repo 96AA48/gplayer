@@ -7,7 +7,8 @@ var lame = require('lame');
 var fs = require("fs");
 var http = require("http");
 var readline = require("readline").createInterface({input : process.stdin, output : process.stdout});
-var vol = 1;
+var mplayer = require("child_process").spawn;
+var config = getConfig();
 
 var args = [];
 
@@ -50,10 +51,8 @@ function help() {
 }
 
 function offline() {
-	var files = [];
-	 for (i = 0; i< fs.readdirSync(getDownloadFolder()).length; i++) {
-	 	files[i] = fs.readdirSync(getDownloadFolder())[i];
-	};
+	var files = fs.readdirSync(getDownloadFolder());
+	files.splice(0, 1);
 
 	for (i=0; i<files.length; i++) {
 		process.stdout.write("[".cyan + i + "] ".cyan + (files[i].split(".mp3")[0]).bold + "\n");
@@ -108,15 +107,33 @@ function lookup(query) {
 }
 
 function play(file) {
+
 	process.stdout.write(file.split('/')[file.split('/').length - 1].split('.')[0]+ '\n');
-	
-	var decoder = new lame.Decoder();
-	var speaker = new require('speaker')();
 
-	fs.createReadStream(file).pipe(decoder).pipe(speaker);
+	if ((config.playback == "mplayer" || config.playback == null) && process.platform != "win32") {
+		var player = mplayer("mplayer", ["-ao","alsa", file]);
+		var isfiltered = false;
 
+		player.stdout.on("data", function (data) {
+			if (data.toString().substr(0,2) == "A:" && !isfiltered) { 
+				player.stdout.pipe(process.stdout);
+		 		isfiltered = true;
+			}
+		});
 
-	
+		process.stdin.pipe(player.stdin);
+
+		player.on("error", function (data) {process.stdout.write("There was an error playing your song, maybe you need to install mplayer?\n");
+			process.exit(0);
+		});
+	}
+	else {
+		var decoder = new lame.Decoder();
+		var speaker = new require('speaker')();
+		
+		fs.createReadStream(file).pipe(decoder).pipe(speaker);
+	}
+
 }
 
 function link(query) {return "http://tinysong.com/s/" + query + "?format=json&limit=20&key=0131065fac026c65c87e3658dfa66b88";};
@@ -131,5 +148,11 @@ function getDownloadFolder() {
 function getConfig() {
 	if (process.platform == "win32") var config = "C:\\Users\\" + process.env.USERNAME + "\\gplayer\\.config";
 	else if (process.platform == "linux") var config = "/home/" + process.env.USER + '/gplayer/.config';
-	// if (!fs.existsSync(config)) fs.
+	
+	if (!fs.existsSync(config)) {
+		var settings = {'playback' : 'mplayer'};
+		fs.writeFileSync(config, JSON.stringify(settings));
+	}
+
+	return JSON.parse(fs.readFileSync(config));
 }
