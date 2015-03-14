@@ -7,6 +7,7 @@ var lame = require('lame');
 var fs = require("fs");
 var http = require("http");
 var readline = require("readline").createInterface({input : process.stdin, output : process.stdout});
+var vol = 1;
 
 var args = [];
 
@@ -16,9 +17,6 @@ for (i=0; i<process.argv.join(" ").split(" -").length; i++) {
 
 if (args.length == 0) help();
 
-// if (!fs.existsSync("/home/" + process.env["USER"] + "/Music")) {
-// 	fs.mkdirSync("/home/" + process.env["USER"] + "/Music", 0775);
-// }
 _.each(args, function (item) {
 	if (item == "-help" || item == "h") { 
 		help();
@@ -53,7 +51,7 @@ function help() {
 
 function offline() {
 	var files = [];
-	 for (i=0; i< fs.readdirSync(getDownloadFolder()).length; i++) {
+	 for (i = 0; i< fs.readdirSync(getDownloadFolder()).length; i++) {
 	 	files[i] = fs.readdirSync(getDownloadFolder())[i];
 	};
 
@@ -110,15 +108,15 @@ function lookup(query) {
 }
 
 function play(file) {
+	process.stdout.write(file.split('/')[file.split('/').length - 1].split('.')[0]+ '\n');
+	
 	var decoder = new lame.Decoder();
-	var speaker = new require('speaker')();;
-	console.log(speaker);
-	var stream = fs.createReadStream(file);
-	stream.pipe(decoder).pipe(speaker);
-	setTimeout(function () { 
-		stream.unpipe(decoder);
-		stream.pause();
-	}, 5000);
+	var speaker = new require('speaker')();
+
+	fs.createReadStream(file).pipe(decoder).pipe(speaker);
+
+
+	
 }
 
 function link(query) {return "http://tinysong.com/s/" + query + "?format=json&limit=20&key=0131065fac026c65c87e3658dfa66b88";};
@@ -128,4 +126,10 @@ function getDownloadFolder() {
 	else if (process.platform == "linux") var folder = "/home/" + process.env.USER + '/gplayer/';
 	if (!fs.existsSync(folder)) fs.mkdirSync(folder);
 	return folder;
+}
+
+function getConfig() {
+	if (process.platform == "win32") var config = "C:\\Users\\" + process.env.USERNAME + "\\gplayer\\.config";
+	else if (process.platform == "linux") var config = "/home/" + process.env.USER + '/gplayer/.config';
+	// if (!fs.existsSync(config)) fs.
 }
