@@ -8,6 +8,11 @@ var http = require("http");
 var mplayer = require("child_process").spawn;
 var readline = require("readline").createInterface({input : process.stdin, output : process.stdout});
 
+console.log("\n\nHey there silly goose, this is a retired project, WHAT DO YOU THINK YOU'RE DOING?".red);
+console.log("The code doesn't work anymore because Grooveshark shutdown months/years ago".yellow);
+console.log("But there's good news! You could try out my other tty mplayer helpers like gmplayer and yplayer".green);
+console.log("Just look them up on npm or github and have fun!\n\n");
+
 var args = []; for (i=0;i<process.argv.join(" ").split(" -").length;i++) {if (i!=0) args[i-1] = process.argv.join(" ").split(" -")[i]}; if (args.length == 0) help();
 if (!fs.existsSync("/home/" + process.env["USER"] + "/Music")) {fs.mkdirSync("/home/" + process.env["USER"] + "/Music", 0775)}
 _.each(args, function (item) {
